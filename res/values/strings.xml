@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="facebook">FaceBook</string>
+    <string name="twitter">Twitter</string>
+    <string name="foursquare">FourSquare</string>
+    <string name="cancel">Cancel</string>
+    <string name="continue_string">Continue</string>
+    <string name="app_name">JittrStartupFlow</string>
+    <string name="app_description">Jittr Install Flow</string></resources>
