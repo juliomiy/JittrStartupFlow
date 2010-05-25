@@ -31,7 +31,7 @@ public class JittrSQLiteOpenHelper extends SQLiteOpenHelper {
 	public static final String GAME_TWITTER_OAUTH_TOKEN_SECRET = "twitterOAuthTokenSecret";
 	public static final String GAME_FOURSQUARE_OAUTH_TOKEN = "foursquareOAuthToken";
 	public static final String GAME_FOURSQUARE_OAUTH_TOKEN_SECRET = "foursquareOAuthTokenSecret";
-	public static final String GAME_USERDEFAULTNETWORK="defaultNetwork";
+	public static final String GAME_USERDEFAULTNETWORK="primaryNetworkName";
 	
 	
 	public JittrSQLiteOpenHelper(Context context) {
@@ -82,8 +82,9 @@ public class JittrSQLiteOpenHelper extends SQLiteOpenHelper {
 			);
 		sql = "create table go_user (userID integer primary key  not null," +
 		      "userName text not null default 'anonymous'," +
+		      "privacy boolean not null default true," +
 		      "bankBalance float not null default 0," +
-		      "defaultNetwork text," +
+		      "primaryNetworkName text," +
 		      "createdDate timestamp not null default CURRENT_TIMESTAMP," +
 		      "modifiedDate timestamp null" +
 				");";

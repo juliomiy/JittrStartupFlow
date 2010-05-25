@@ -1,33 +1,50 @@
 package com.jittr.android.JittrStartupFlow;
 
+import org.w3c.dom.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.http.client.methods.HttpGet;
+
+import com.jittr.android.foursquare.GOFoursquare;
+import com.jittr.android.twitter.GOTwitterWrapper;
+
 import android.app.Activity;
 import android.os.Bundle;
-
-	import oauth.signpost.exception.OAuthCommunicationException;
-	import oauth.signpost.exception.OAuthExpectationFailedException;
-	import oauth.signpost.exception.OAuthMessageSignerException;
-	import oauth.signpost.exception.OAuthNotAuthorizedException;
-	import oauth.signpost.http.*;
-	import oauth.signpost.OAuthProvider;
-	import oauth.signpost.basic.DefaultOAuthConsumer;
-	import oauth.signpost.basic.DefaultOAuthProvider;
-	import oauth.signpost.OAuthConsumer;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
+import oauth.signpost.exception.OAuthCommunicationException;
+import oauth.signpost.exception.OAuthExpectationFailedException;
+import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.exception.OAuthNotAuthorizedException;
+import oauth.signpost.http.*;
+import oauth.signpost.OAuth;
+import oauth.signpost.OAuthProvider;
+import oauth.signpost.basic.DefaultOAuthConsumer;
+import oauth.signpost.basic.DefaultOAuthProvider;
+import oauth.signpost.OAuthConsumer;
 import twitter4j.http.AccessToken;
-	//import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-	import android.app.Activity;
-	import android.content.Intent;
-	import android.net.Uri;
-	import android.os.Bundle;
-	import android.util.Log;
-	import android.view.View;
-	import android.widget.Button;
-	import android.widget.ImageView;
-	import android.widget.RadioButton;
-	import android.widget.RadioGroup;
-	import android.widget.Toast;
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Toast;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 
 	public class JittrStartupFlowActivity extends JittrBaseActivity {
@@ -45,6 +62,9 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		private int twitter_radioID;
 		private int foursquare_radioID;
 
+		private String foursquareUserName;
+		private String foursquarePassword;
+		
 		private final int SIGNUP_FACEBOOK=1;
 		private final int SIGNUP_TWITTER=2;
 		private final int SIGNUP_FOURSQUARE=3;
@@ -64,11 +84,16 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		public final static String FOURSQUARE_REQUEST_TOKEN_ENDPOINT_URL="http://foursquare.com/oauth/request_token";
 		public final static String FOURSQUARE_ACCESS_TOKEN_ENDPOINT_URL="http://foursquare.com/oauth/access_token";
 	    public final static String FOURSQUARE_AUTHORIZE_WEBSITE_URL="http://foursquare.com/oauth/authorize";
-		private static final String GAMEON_FOURSQUARE_CALLBACK_URL = "gameon://oauth";//"http://jittr.com/jittr/confirm.php";
-
+		private static final String GAMEON_FOURSQUARE_CALLBACK_URL = "gameon://fsoauth";//"http://jittr.com/jittr/confirm.php";
+        private static final String FOURSQUARE_BASIC_AUTHORIZE_WEBSITE_URL="http://api.foursquare.com/v1/authexchange?";
 		private static final String TAG = "JittrStartupFlowActivity";
 	//END Temporary
-
+		private boolean hasFoursquareCredentials() {
+			if (foursquareUserName != null && foursquarePassword != null) {
+				return true;
+			}
+			return false;
+		}
 		/** Called when the activity is first created. */
 	    @Override
 	    public void onCreate(Bundle savedInstanceState) {
@@ -139,22 +164,51 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		    	  authorizeTwitter(v);
 		          break;
 		       case SIGNUP_FOURSQUARE:
-		    	   authorizeFoursquare(v);
+		    	  // getFoursquareCredentials(v);
+		    	  authorizeFoursquare();
 		          break;
 		    } //switch
 		} //continueSignUp
 
-		private void authorizeFoursquare(View v) {
+		/* instantiate an activity to obtain username/password*/
+		private void getFoursquareCredentials(View v) {
+			Intent intent = new Intent(JittrStartupFlowActivity.this, FSCredentialsActivity.class);
+          	startActivityForResult(intent, SIGNUP_FOURSQUARE);
+		}
+		// Listen for results.
+		public void onActivityResult(int requestCode, int resultCode, Intent data){
+		    // See which child activity is calling us back.
+			Log.d(TAG, "OnActivityResult - requestCode " + requestCode + " ResultCode " +  resultCode + " Data " + data );
+		    switch (requestCode) {
+		        case SIGNUP_FOURSQUARE:
+		    	   if (resultCode == RESULT_OK) {
+		              Bundle credentials = data.getBundleExtra(data.getPackage());	
+		              foursquareUserName = (String)credentials.get("username");
+		              foursquarePassword = (String)credentials.get("password");
+                      if (hasFoursquareCredentials()) {
+          //          	  authorizeFoursquare( foursquareUserName, foursquarePassword);
+                      }
+		              break;
+		    	   }  
+		    	   
+		    	 default:
+		    		 super.onActivityResult(requestCode,resultCode,data);
+		    		 break;
+		    } //switch
+		} //
+		
+		private void authorizeFoursquare() {
 			/**
 			 * Open the browser and asks the user to authorize the app.
 			 * Afterwards, we redirect the user back here!
 			 */
-				try {
+			    //String url = FOURSQUARE_BASIC_AUTHORIZE_WEBSITE_URL +"fs_username=" + userName +"&fs_password=" + password;
+                 try {
 	  	    	    consumer = new DefaultOAuthConsumer(GAMEON_FOURSQUARE_CONSUMER_KEY,GAMEON_FOURSQUARE_CONSUMER_SECRET);
-					provider = new DefaultOAuthProvider(FOURSQUARE_REQUEST_TOKEN_ENDPOINT_URL,
+	  	    	    provider = new DefaultOAuthProvider(FOURSQUARE_REQUEST_TOKEN_ENDPOINT_URL,
 							                            FOURSQUARE_ACCESS_TOKEN_ENDPOINT_URL,
 							                            FOURSQUARE_AUTHORIZE_WEBSITE_URL);
-					String authUrl = provider.retrieveRequestToken(consumer, GAMEON_FOURSQUARE_CALLBACK_URL);
+					String authUrl = provider.retrieveRequestToken(consumer,OAuth.OUT_OF_BAND);// GAMEON_FOURSQUARE_CALLBACK_URL);
 					Toast.makeText(this, "Please authorize GameON app!", Toast.LENGTH_LONG).show();
 					this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
 				} catch (Exception e) {
@@ -190,22 +244,28 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		 */
 		@Override
 		protected void onNewIntent(Intent intent) {
-
+            String verifier=null;
+            
 			super.onNewIntent(intent);
-            AccessToken a;
+            AccessToken accessToken;
 			Uri uri = intent.getData();
 			if (uri != null && uri.toString().startsWith(GAMEON_TWITTER_CALLBACK_URL)) {
-
-				String verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-
-				try {
+				verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
+			} else if (uri != null && uri.toString().startsWith(GAMEON_FOURSQUARE_CALLBACK_URL)) {
+				verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_TOKEN);
+			}	
+			try {
 					provider.retrieveAccessToken(consumer, verifier);
-					a = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
-					String screenName = null;
+					accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
+					String userName = null;
 					if (socialNetworkSelected == SIGNUP_TWITTER) {
-						screenName = getTwitterScreenName(a);
+						GOTwitterWrapper twitter = new GOTwitterWrapper();
+						userName = twitter.getTwitterScreenName(accessToken);
+					} else if (socialNetworkSelected == SIGNUP_FOURSQUARE) {
+                        GOFoursquare foursquare = new GOFoursquare(accessToken);
+						userName = foursquare.getFoursquareScreenName(accessToken);
 					}
-					saveUserCredentials(a.getToken(),a.getTokenSecret(),screenName);		
+ 					saveUserCredentials(accessToken.getToken(),accessToken.getTokenSecret(),userName);		
 				} catch (OAuthMessageSignerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -218,13 +278,12 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 				} catch (OAuthCommunicationException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} 
-			}
-		}
-
+				} //try 
+		}   //onNewIntent
+		
+	
 		private void authorizeFacebook(View v) {
 			// TODO Auto-generated method stub
-
 		}
 
 		private void cancelSignUp(View v) {
@@ -252,25 +311,48 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		}
 		private long insertRemoteUser(String oAuthToken,
 				String oAuthTokenSecret, String userName,String socialNetwork) {
-		
-			long userID=0;
-			return 2 ; //userID;
+			    String strUrl = "http://jittr.com/jittr/gameon/go_postnewuser.php?primarynetworkname="+socialNetwork;
+		        long userID = -1;
+			    try {
+					URL url = new URL(strUrl);
+					HttpURLConnection request = (HttpURLConnection) url.openConnection();
+					request.setRequestMethod("GET");
+					//consumer.sign(request);
+					request.connect();
+					InputStream is = request.getInputStream();
+					BufferedReader br = new BufferedReader(new InputStreamReader(is));
+	                String inputLine, response=null;
+					while ((inputLine = br.readLine()) != null ) {
+						response += inputLine;
+					}
+					is.close();
+			        Log.d(TAG,response);
+			        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance(); 
+			        DocumentBuilder builder = factory.newDocumentBuilder();
+                    InputSource inputsource = new InputSource(new StringReader(response));
+			        Document document = builder.parse(inputsource);
+			        
+			        Element element = document.getDocumentElement();
+			        NodeList nodelist = element.getElementsByTagName("userid");
+			        Element elementUserid = (Element) nodelist.item(0);
+			        NodeList nlUserID = elementUserid.getChildNodes();
+			        
+			        Long longUserID = new Long((nlUserID.item(0)).getNodeValue());
+			        userID = longUserID.longValue();
+			        Log.d(TAG , "UserID " + userID );
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ParserConfigurationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SAXException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			return userID ; //userID;
 		}
-		
-		private String getTwitterScreenName(AccessToken accessToken) {
-            String screenName = null;
-			Twitter twitter = new TwitterFactory().getInstance();
-			twitter.setOAuthConsumer(GAMEON_TWITTER_CONSUMER_KEY, GAMEON_TWITTER_CONSUMER_SECRET);
-			twitter.setOAuthAccessToken(accessToken);
-            try {
-				screenName = twitter.getScreenName();
-			} catch (IllegalStateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TwitterException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}			
-			return screenName;
-		}
-}
+}  //class

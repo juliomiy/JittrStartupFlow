@@ -6,4 +6,10 @@
     <string name="cancel">Cancel</string>
     <string name="continue_string">Continue</string>
     <string name="app_name">JittrStartupFlow</string>
-    <string name="app_description">Jittr Install Flow</string></resources>
+    <string name="app_description">Jittr Install Flow</string>
+    <string name="fspassword_label">Enter Password</string>
+    <string name="fsusername_label">Enter Username</string>
+    <string name="fsinstructions_label">Enter Foursquare Credentials</string>
+    <string name="fscredentials_activity">Get Foursquare Credentials</string>
+    <string name="login">Login</string>
+ </resources>

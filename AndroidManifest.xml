@@ -17,9 +17,18 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
                 <category android:name="android.intent.category.BROWSABLE"></category>
                 <data android:scheme="gameon" android:host="oauth" />
+                 <data android:scheme="gameon" android:host="fsoauth" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".FSCredentialsActivity" 
+                  android:launchMode="standard"
+                  android:text="@string/fscredentials_activity"
+         >
+         <intent-filter>
+             <action android:name="android.intent.action.VIEW" />
+             <category android:name="android.intent.category.DEFAULT" />
+         </intent-filter>
+         </activity>activity>
   </application>
     <uses-sdk android:minSdkVersion="4" />
 

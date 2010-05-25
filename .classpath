@@ -5,5 +5,6 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="lib" path="/Users/juliomiyares/Documents/workspace/GameOn/libs/twitter4j-core-2.1.2-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="/Users/juliomiyares/Documents/workspace/GameOn/libs/signpost-core-1.2.1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/juliomiyares/Documents/workspace/JittrStartupFlow/commons-codec-1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

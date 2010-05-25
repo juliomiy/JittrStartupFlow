@@ -36,12 +36,16 @@ public class JittrStartupFlowApplication extends Application {
 		
 		//insert to go_userSettings
 		values=new ContentValues();
-		values.put(JittrSQLiteOpenHelper.GAME_USER_ID, id);
+		values.put(JittrSQLiteOpenHelper.GAME_USER_ID, userID);
 		if (socialNetwork=="twitter") {
 		   values.put(JittrSQLiteOpenHelper.GAME_TWITTER, userName);
 		   values.put(JittrSQLiteOpenHelper.GAME_TWITTER_OAUTH_TOKEN,OAuthToken);
 		   values.put(JittrSQLiteOpenHelper.GAME_TWITTER_OAUTH_TOKEN_SECRET,OAuthTokenSecret);
-		}  //if   
+		} else if (socialNetwork=="foursquare") {
+		   values.put(JittrSQLiteOpenHelper.GAME_FOURSQUARE, userName);
+		   values.put(JittrSQLiteOpenHelper.GAME_FOURSQUARE_OAUTH_TOKEN,OAuthToken);
+		   values.put(JittrSQLiteOpenHelper.GAME_FOURSQUARE_OAUTH_TOKEN_SECRET,OAuthTokenSecret);		   
+		}
 		database.insert(JittrSQLiteOpenHelper.GAME_USER_SETTINGS_TABLE, null, values);
         return id;
 	}
