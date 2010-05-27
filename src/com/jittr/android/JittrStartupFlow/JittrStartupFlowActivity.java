@@ -68,6 +68,10 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		private final int SIGNUP_FACEBOOK=1;
 		private final int SIGNUP_TWITTER=2;
 		private final int SIGNUP_FOURSQUARE=3;
+		
+		private GOTwitterWrapper twitter;
+        private GOFoursquare foursquare;
+        
 		private DefaultOAuthProvider provider;
 		private OAuthConsumer consumer;
 
@@ -86,6 +90,14 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 	    public final static String FOURSQUARE_AUTHORIZE_WEBSITE_URL="http://foursquare.com/oauth/authorize";
 		private static final String GAMEON_FOURSQUARE_CALLBACK_URL = "gameon://fsoauth";//"http://jittr.com/jittr/confirm.php";
         private static final String FOURSQUARE_BASIC_AUTHORIZE_WEBSITE_URL="http://api.foursquare.com/v1/authexchange?";
+        
+        private static final String GAMEON_FACEBOOK_CONSUMER_KEY="113817188649294";
+        private static final String GAMEON_FACEBOOK_CONSUMER_SECRET="d0e1c39b00814c1cb4819f5133338c89";
+        private static final String FACEBOOK_REQUEST_TOKEN_ENDPOINT_URL="http://foursquare.com/oauth/request_token";
+        private static final String FACEBOOK_ACCESS_TOKEN_ENDPOINT_URL_URL="https://graph.facebook.com/oauth/access_token";
+        private static final String FACEBOOK_AUTHORIZE_URL_WEBSITE_URL="https://graph.facebook.com/oauth/authorize";
+        private static final String GAMEON_FACEBOOK_CALLBACK_URL="gameon://fboauth";
+        
 		private static final String TAG = "JittrStartupFlowActivity";
 	//END Temporary
 		private boolean hasFoursquareCredentials() {
@@ -100,6 +112,8 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 	        super.onCreate(savedInstanceState);
 	        setContentView(R.layout.main);
 	        setUpViews();
+	        twitter = new GOTwitterWrapper();
+	        foursquare = new GOFoursquare();
 	    }
 		@Override
 		protected void onResume() {
@@ -186,7 +200,7 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		              foursquareUserName = (String)credentials.get("username");
 		              foursquarePassword = (String)credentials.get("password");
                       if (hasFoursquareCredentials()) {
-          //          	  authorizeFoursquare( foursquareUserName, foursquarePassword);
+                    	 // authorizeFoursquare( foursquareUserName, foursquarePassword);
                       }
 		              break;
 		    	   }  
@@ -222,19 +236,10 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 			 * Open the browser and asks the user to authorize the app.
 			 * Afterwards, we redirect the user back here!
 			 */
-				try {
-	  	    	    consumer = new DefaultOAuthConsumer(GAMEON_TWITTER_CONSUMER_KEY,GAMEON_TWITTER_CONSUMER_SECRET);
-					provider = new DefaultOAuthProvider(TWITTER_REQUEST_TOKEN_ENDPOINT_URL,
-							                            TWITTER_ACCESS_TOKEN_ENDPOINT_URL,
-							                            TWITTER_AUTHORIZE_WEBSITE_URL);
-					String authUrl = provider.retrieveRequestToken(consumer, GAMEON_TWITTER_CALLBACK_URL);
-					Toast.makeText(this, "Please authorize GameON app!", Toast.LENGTH_LONG).show();
-					this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
-				} catch (Exception e) {
-					Log.e(TAG, e.getMessage());
-					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-				}
-
+		        String strAuthUrl = twitter.getTwitterRequestToken();
+				Toast.makeText(this, "Please authorize GameON app!", Toast.LENGTH_LONG).show();
+				this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(strAuthUrl)));
+	
 		}
 		/**
 		 * As soon as the user successfully authorized the app, we are notified
@@ -245,45 +250,70 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 		@Override
 		protected void onNewIntent(Intent intent) {
             String verifier=null;
+			String userName = null;
             
 			super.onNewIntent(intent);
-            AccessToken accessToken;
+            AccessToken accessToken =null;
 			Uri uri = intent.getData();
-			if (uri != null && uri.toString().startsWith(GAMEON_TWITTER_CALLBACK_URL)) {
-				verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
-			} else if (uri != null && uri.toString().startsWith(GAMEON_FOURSQUARE_CALLBACK_URL)) {
-				verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_TOKEN);
-			}	
 			try {
+				if (uri != null && uri.toString().startsWith(GAMEON_TWITTER_CALLBACK_URL)) {
+					verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
+				    twitter.getTwitterAccessToken(verifier);
+					userName = twitter.getTwitterScreenName();
+				} else if (uri != null && uri.toString().startsWith(GAMEON_FOURSQUARE_CALLBACK_URL)) {
+					verifier = uri.getQueryParameter(oauth.signpost.OAuth.OAUTH_TOKEN);
 					provider.retrieveAccessToken(consumer, verifier);
 					accessToken = new AccessToken(consumer.getToken(), consumer.getTokenSecret());
-					String userName = null;
-					if (socialNetworkSelected == SIGNUP_TWITTER) {
-						GOTwitterWrapper twitter = new GOTwitterWrapper();
-						userName = twitter.getTwitterScreenName(accessToken);
-					} else if (socialNetworkSelected == SIGNUP_FOURSQUARE) {
-                        GOFoursquare foursquare = new GOFoursquare(accessToken);
-						userName = foursquare.getFoursquareScreenName(accessToken);
-					}
- 					saveUserCredentials(accessToken.getToken(),accessToken.getTokenSecret(),userName);		
-				} catch (OAuthMessageSignerException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (OAuthNotAuthorizedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (OAuthExpectationFailedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (OAuthCommunicationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} //try 
+                    GOFoursquare foursquare = new GOFoursquare(accessToken);
+				    userName = foursquare.getFoursquareScreenName(accessToken);
+				}	else if (uri != null && uri.toString().startsWith(GAMEON_FACEBOOK_CALLBACK_URL)) {
+					
+				}
+			} catch (OAuthMessageSignerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (OAuthNotAuthorizedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (OAuthExpectationFailedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (OAuthCommunicationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} //try 
+			
+			if (socialNetworkSelected == SIGNUP_TWITTER) 
+				 saveUserCredentials(twitter.getAccessTokenString(),twitter.getAccessTokenSecretString(),userName);		
+			else if (socialNetworkSelected == SIGNUP_FOURSQUARE)
+				 saveUserCredentials(accessToken.getToken(),accessToken.getTokenSecret(),userName);		
+				
 		}   //onNewIntent
 		
 	
+		
 		private void authorizeFacebook(View v) {
-			// TODO Auto-generated method stub
+			/**
+			 * Open the browser and asks the user to authorize the app.
+			 * Afterwards, we redirect the user back here!
+			 */
+                 try {
+	  	    	   // consumer = new DefaultOAuthConsumer(GAMEON_FOURSQUARE_CONSUMER_KEY,GAMEON_FOURSQUARE_CONSUMER_SECRET);
+	  	    	   /* provider = new DefaultOAuthProvider(FOURSQUARE_REQUEST_TOKEN_ENDPOINT_URL,
+							                            FOURSQUARE_ACCESS_TOKEN_ENDPOINT_URL,
+							                            FOURSQUARE_AUTHORIZE_WEBSITE_URL);
+					*/
+					String authUrl = FACEBOOK_AUTHORIZE_URL_WEBSITE_URL + "?client_id="+
+					                 GAMEON_FACEBOOK_CONSUMER_KEY + "&redirect_uri=" +
+					                 GAMEON_FACEBOOK_CALLBACK_URL +"&display=touch";
+					                 ;
+					Toast.makeText(this, "Please authorize GameON app!", Toast.LENGTH_LONG).show();
+					this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+				} catch (Exception e) {
+					Log.e(TAG, e.getMessage());
+					Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+
 		}
 
 		private void cancelSignUp(View v) {
@@ -309,9 +339,11 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 			       appObject.createLocalUser(oAuthToken, oAuthTokenSecret, userName, socialNetwork,userID);
                 return userID;
 		}
-		private long insertRemoteUser(String oAuthToken,
-				String oAuthTokenSecret, String userName,String socialNetwork) {
-			    String strUrl = "http://jittr.com/jittr/gameon/go_postnewuser.php?primarynetworkname="+socialNetwork;
+		private long insertRemoteUser(String strOAuthToken,
+				String strOAuthTokenSecret, String userName,String socialNetwork) {
+			    String strUrl = "http://jittr.com/jittr/gameon/go_postnewuser.php?primarynetworkname="+socialNetwork+"&username="+userName+
+			      "&oauthtoken=" + strOAuthToken + "&oauthtokensecret="+strOAuthTokenSecret;
+			          
 		        long userID = -1;
 			    try {
 					URL url = new URL(strUrl);

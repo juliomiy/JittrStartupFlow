@@ -37,6 +37,7 @@ public class JittrStartupFlowApplication extends Application {
 		//insert to go_userSettings
 		values=new ContentValues();
 		values.put(JittrSQLiteOpenHelper.GAME_USER_ID, userID);
+		//values.put(JittrSQLiteOpenHelper.GAME_USERNAME, userName);
 		if (socialNetwork=="twitter") {
 		   values.put(JittrSQLiteOpenHelper.GAME_TWITTER, userName);
 		   values.put(JittrSQLiteOpenHelper.GAME_TWITTER_OAUTH_TOKEN,OAuthToken);

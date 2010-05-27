@@ -12,4 +12,5 @@
     <string name="fsinstructions_label">Enter Foursquare Credentials</string>
     <string name="fscredentials_activity">Get Foursquare Credentials</string>
     <string name="login">Login</string>
+    <string name="selectnetwork">Select primary identity</string>
  </resources>

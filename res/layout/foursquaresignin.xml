@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+>
+<TextView 
+    android:text="@string/fsinstructions_label" 
+    android:id="@+id/fsinstructions_label" 
+    android:layout_width="wrap_content"
+     android:layout_height="wrap_content">
+</TextView>
+<TextView 
+     android:text="@string/fsusername_label" 
+     android:id="@+id/fsusername_label" 
+     android:layout_width="wrap_content" 
+     android:layout_height="wrap_content">
+</TextView>
+<EditText 
+     android:id="@+id/fsusername"
+     android:layout_width="fill_parent"
+      android:layout_height="wrap_content">
+</EditText>
+<TextView 
+     android:text="@string/fspassword_label"
+     android:id="@+id/fspassword_label" 
+     android:layout_width="wrap_content" 
+     android:layout_height="wrap_content">
+ </TextView>
+<EditText 
+     android:id="@+id/fspassword" 
+     android:layout_width="fill_parent"
+     android:layout_height="wrap_content">
+ </EditText>
+<Button 
+     android:text="@string/login" 
+     android:id="@+id/login"
+     android:enabled="false"
+     android:layout_width="wrap_content" 
+     android:layout_height="wrap_content">
+ </Button>
+<Button 
+     android:text="@string/cancel"
+     android:id="@+id/cancel"
+     android:layout_width="wrap_content" 
+     android:layout_height="wrap_content">
+ </Button>
+</LinearLayout>
